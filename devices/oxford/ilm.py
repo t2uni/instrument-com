@@ -1,8 +1,7 @@
 #!/usr/bin/python
-""" This module offers all necessary classes to handle communication with the 
-    oxford ILM  
+""" This module offers all necessary classes to handle communication with the
+    oxford ILM
 """
-
 __author__ = 'Peter Gruszka'
 __version__ = '1.0'
 
@@ -28,14 +27,14 @@ class ILM(object):
         gpib.config(self.ilm.device, gpib.IbcEOSrd, 0x800 | 0x400)
 
     def get_level(self):
-        """ 
-            Returns the current He4 level of the cryostat in percent 
-            
-            Return: 
+        """
+            Returns the current He4 level of the cryostat in percent
+
+            Return:
             (float) He4 level in percent
         """
         # ask ilm and discard first character since this is a 'R'
-        # ILM has 6 as internal address 
+        # ILM has 6 as internal address
         level_string = self.ilm.ask('@6R1')[1:]
 
         return float(level_string) / 10.0
@@ -43,7 +42,7 @@ class ILM(object):
 
 # example usage of the ILM class
 if __name__ == '__main__':
-    device = visa.instrument('GPIB::24')
-    ilm = ILM(device)
+    DEVICE = visa.instrument('GPIB::24')
+    ILM_CONNECTION = ILM(DEVICE)
 
-    print ilm.getLevel(), '%'
+    print ILM_CONNECTION.get_level(), '%'

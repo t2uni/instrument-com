@@ -1,6 +1,6 @@
 #!/usr/bin/python
-""" This module offers all necessary classes to handle communication with the 
-    oxford ITC 
+""" This module offers all necessary classes to handle communication with the
+    oxford ITC
 """
 
 __author__ = 'Peter Gruszka'
@@ -28,27 +28,28 @@ class ITC(object):
         # needed for error free communication
         gpib.config(self.itc.device, gpib.IbcEOSchar, ord('\r'))
         # use REOS und XEOS
-        gpib.config(self.itc.device, gpib.IbcEOSrd, 0x800 | 0x400) 
+        gpib.config(self.itc.device, gpib.IbcEOSrd, 0x800 | 0x400)
 
-    def get_temperature(self, id):
+    def get_temperature(self, identifier):
         """
             Returns the temperature of a certain temperature sensor in the ITC
 
             Arguments:
-            id -- (int) the id of a sensor which can take the values [1,2,3]
+            identifier -- (int) the identifier of a sensor
+                                which can take the values [1,2,3]
 
             Return:
-            (float) Temperature in Kelvin from sensor with given id
-            if id is not allowed this function returns 0.0
+            (float) Temperature in Kelvin from sensor with given identifier
+            if identifier is not allowed this function returns 0.0
         """
 
-        #if id is not allowed return just 0
-        if id != 1 and id != 2 and id != 3:
+        #if identifier is not allowed return just 0
+        if identifier != 1 and identifier != 2 and identifier != 3:
             return 0.0
 
-        #get answer from itc for sensor with given id
+        #get answer from itc for sensor with given identifier
         #discard first character since it is just the character 'R'
-        answer = self.itc.ask('@0R' + str(id))[1:]
+        answer = self.itc.ask('@0R' + str(identifier))[1:]
 
         return float(answer)
 
@@ -76,9 +77,9 @@ class ITC(object):
 
 # Example
 if __name__ == '__main__':
-    device = visa.instrument('GPIB::24')
-    itc = ITC(device)
+    DEVICE = visa.instrument('GPIB::24')
+    ITC_CONNECTION = ITC(DEVICE)
 
-    print itc.get_temperature1(), 'K'
-    print itc.get_temperature2(), 'K'
-    print itc.get_temperature3(), 'K'
+    print ITC_CONNECTION.get_temperature1(), 'K'
+    print ITC_CONNECTION.get_temperature2(), 'K'
+    print ITC_CONNECTION.get_temperature3(), 'K'

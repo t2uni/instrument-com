@@ -195,6 +195,7 @@ def instrument(inst, timeout=10.0):
 
     """
     #TODO: make this look nicer
+    #TODO: add minimalmodbus support  MODBUS:: ?
     try:
         inst_type, address = inst.split("::")
     except ValueError:

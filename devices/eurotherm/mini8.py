@@ -7,6 +7,7 @@ __version__ = '1.0'
 
 __email__ = 'gruszka@physik.uni-frankfurt.de'
 __status__ = 'alpha'
+__license__ = 'MIT'
 
 
 

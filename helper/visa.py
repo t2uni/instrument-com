@@ -119,6 +119,10 @@ class GpibInstrument(GenericInstrument):
         """ closes connection to remote device """
         gpib.close(self.device)
 
+    def clear(self):
+        """ clears all communication buffers """
+        gpib.clear(self.device)
+
 class SerialInstrument(GenericInstrument):
     """ Implementation of GenericInstrument to communicate with gpib devices """
     def __init__(self, device):

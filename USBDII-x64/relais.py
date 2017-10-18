@@ -74,13 +74,13 @@ class RelaisCard:
         elif os.name == "nt":
             self.__handle = usbdii.hid_OpenDevice(self.__card_type, card_number)
 
-        if self.__handle == -1:
+        if self.__handle <= -1:
             return False
 
         return True
 
     def disconnect(self):
-        if self.__handle != -1:
+        if self.__handle > 0:
             handle_c = c_uint(self.__handle)
             if os.name == 'posix':
                 usbdii.dcihid_close(handle_c)

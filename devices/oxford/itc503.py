@@ -86,8 +86,6 @@ class ITC(object):
             Arguments:
             temperature -- (float) temperature to be set as a set point
 
-            Return:
-            Message that the temperature has been set sucessfully.
         """
 
 
@@ -109,7 +107,7 @@ class ITC(object):
         self.itc.write("@0T" + str(temperature)[:5])	# set Temperature-set-point with a maximum of 5 digits
         self.itc.write("@0C0")			# local & locked
 
-
+    	
     def set_temperature_sweep(self, temperature, sweep_time = 0, hold_time = 1399):
         """
             Adjusts the settings of a temperature sweep of the device.
@@ -119,8 +117,6 @@ class ITC(object):
             sweep_time -- (float) total time for the sweep
             hold_time -- (float) time the temperature should be held, once reached
 
-            Return:
-            Message that the sweep parameters have been set sucessfully.
         """
 			
         # Check and adjust user input
@@ -179,8 +175,6 @@ class ITC(object):
         """
             Starts a temperature sweep.
 
-            Return:
-            Message that the sweep is running.
         """
         # Communication with the instrument
         self.itc.write("@0C3")	# remote & unlocked		
@@ -188,14 +182,190 @@ class ITC(object):
         self.itc.write("@0S1")	# start sweep		
         self.itc.write("@0C0")	# local & locked
 
+        
+    def stop_temperature_sweep(self):
+        """
+            Stops an existing temperature sweep.
 
+        """
+        # Communication with the instrument
+        self.itc.write("@0C3")	# remote & unlocked		
+        self.itc.write("@0S0")	# stop existing sweep
+        self.itc.write("@0C0")	# local & locked
+
+
+    def toggle_auto_pid(self, value):
+    		"""
+    				Enables or disables the Auto-PID button according to user input
+						
+						Arguments:
+            value -- (Bool/Int) Enables [Ture/1] or Disables [False/0] Auto-PID
+
+        """
+		
+		# Check and adjust user input
+        try:
+        	value = bool(value)
+        except:
+            raise ScriptSyntaxError("The Toggle Value must be 1, 0 or a Bool")
+
+
+        # Communication with the instrument
+	    self.itc.write("@0C3")	# remote & unlocked	
+        if value:
+	        self.itc.write("@0L1")	# Use Auto-PID
+	    else:
+	        self.itc.write("@0L0")	# Disables use of Auto-PID
+
+	    self.itc.write("@0C0")	# local & locked
+
+	def get_device_status(self):
+        """
+            Returns the current settings and status of the ITC
+
+            Return:
+            (dictionary of integers/boolean) The returned Dictionary contains information about the system status:
+            		"heater_auto": Heater set to automatic control
+        			"gas_flow_auto": Gas-Flow set to automatic control
+        			"system_remote": System is to be controlled remotely
+        			"system_locked": System is locked to any input
+        			"sweep_running": A sweep is currently running
+        			"sweep_holding": Sweep finished, holding final temperature
+        			"temperature_sensor_used": Temperature sensor used to control Temperature
+        			"auto_pid": PID-Parameters chosen automatically from internal list
+        """
+
+        # Communication with the instrument		
+        status = self.itc.ask("@0X")	# stop existing sweep
+
+        # Device output Sequence: 	XnAnCnSnnHn L n
+        # 							0123456789101112
+
+
+        # Examine Heater and Gas-Flow settings
+        if int(status[3]) == 0:
+        	heater_auto = 0
+        	gas_flow_auto = 0
+        elif int(status[3]) == 1:
+        	heater_auto = 1
+        	gas_flow_auto = 0
+        elif int(status[3]) == 2:
+        	heater_auto = 0
+        	gas_flow_auto = 1
+        elif int(status[3]) == 3:
+        	heater_auto = 1
+        	gas_flow_auto = 1
+
+        # Examine System LOC/REM/LOCK-Status
+        if int(status[5]) == 0:
+        	system_remote = 0
+        	system_locked = 1
+        elif int(status[5]) == 1:
+        	system_remote = 1
+        	system_locked = 1
+        elif int(status[5]) == 2:
+        	system_remote = 0
+        	system_locked = 0
+        elif int(status[5]) == 3:
+        	system_remote = 1
+        	system_locked = 0
+
+        # Examine System Sweep-Stautus for Sweep Table 1
+        if int(status[7:9]) == 0:
+        	sweep_running = 0 # No sweep running
+        	sweep_holding = 0
+        elif int(status[7:9]) == 1:
+        	sweep_status = 1 # Sweeping to Sweep Point 1
+        	sweep_holding = 0
+        elif int(status[7:9]) == 2:
+        	sweep_status = 0 # Sweep finished holding temperature
+        	sweep_holding = 1
+
+        # Examine which Heat Sensor is used for Heater Control
+        if int(status[10]) == 1:
+        	temperature_sensor_used = 1
+        elif int(status[10]) == 2:
+        	temperature_sensor_used = 2
+        elif int(status[10]) == 3:
+        	temperature_sensor_used = 3
+
+        # Examine Auto-PID Status
+        if int(status[12]) == 0:
+        	auto_pid = 0
+        elif int(status[12]) == 1:
+        	auto_pid = 1
+
+
+        status_dic = {"heater_auto": heater_auto,
+        			"gas_flow_auto": gas_flow_auto,
+        			"system_remote": system_remote,
+        			"system_locked": system_locked,
+        			"sweep_running": sweep_running,
+        			"sweep_holding": sweep_holding,
+        			"temperature_sensor_used": temperature_sensor_used,
+        			"auto_pid": auto_pid
+        			}
+
+        return status_dic
+
+    def set_pid_parameters(self, proportional, integral, derivative): # Funktion nicht fertig!
+        """
+            Returns the current settings and status of the ITC
+
+            Return:
+            (dictionary of integers/boolean) The returned Dictionary contains information about the system status:
+            		"heater_auto": Heater set to automatic control
+        			"gas_flow_auto": Gas-Flow set to automatic control
+        			"system_remote": System is to be controlled remotely
+        			"system_locked": System is locked to any input
+        			"sweep_running": A sweep is currently running
+        			"sweep_holding": Sweep finished, holding final temperature
+        			"temperature_sensor_used": Temperature sensor used to control Temperature
+        			"auto_pid": PID-Parameters chosen automatically from internal list
+        """
+
+        # Check and adjust user input
+        try:
+            proportional = float(proportional)
+        except:
+            raise ScriptSyntaxError("The proportional value must be a float!")
+        if proportional < 0:
+            proportional = 0
+            print "Proportional value too low, set to 0."
+        if proportional > 300:
+            proportional = 300
+            print "Proportional value too high, set to 299K."
+        try:
+            integral = float(integral)
+        except:
+            raise ScriptSyntaxError("The integral value entered must be a float")
+        if integral < 0:
+            integral = 0
+            print "The integral value entered is too low, set to 0 min."
+        if integral > 1400:
+            integral = 1400 # Set integral time to maximum value 140.0 min.
+            print "The sweep time entered is too high, set to 1399 min."
+        try:
+            hold_time = float(hold_time)
+        except:
+            raise ScriptSyntaxError("The hold time entered must be a float")
+        if hold_time < 0:
+            hold_time = 0
+            print "The hold time entered is too low, set to 0 min."
+        if hold_time > 1399:
+            hold_time = 1399 # Set hold time to maximum value.
+            print "The hold time entered is too high, set to 1399 min."
 
     def clear(self):
         """
-        Clears the GPIB Bus to prevent problems in communication.
+            Clears the GPIB Bus to prevent problems in communication.
 
         """
         self.itc.clear()
+
+
+
+
 
 # Example
 if __name__ == '__main__':
@@ -206,5 +376,5 @@ if __name__ == '__main__':
     print ITC_CONNECTION.get_temperature2(), 'K'
     print ITC_CONNECTION.get_temperature3(), 'K'
     
-    print ITC_CONNECTION.set_temperature_sweep(300, 10)
-    print ITC_CONNECTION.start_temperature_sweep()
+    #print ITC_CONNECTION.set_temperature_sweep(2, 5)
+    #print ITC_CONNECTION.start_temperature_sweep()

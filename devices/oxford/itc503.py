@@ -308,20 +308,15 @@ class ITC(object):
 
         return status_dic
 
-    def set_pid_parameters(self, proportional, integral, derivative): # Funktion nicht fertig!
+    def set_pid_parameters(self, proportional, integral, derivative):
         """
-            Returns the current settings and status of the ITC
+            Adjusts the settings of the PID-Parameters of the device.
 
-            Return:
-            (dictionary of integers/boolean) The returned Dictionary contains information about the system status:
-            		"heater_auto": Heater set to automatic control
-        			"gas_flow_auto": Gas-Flow set to automatic control
-        			"system_remote": System is to be controlled remotely
-        			"system_locked": System is locked to any input
-        			"sweep_running": A sweep is currently running
-        			"sweep_holding": Sweep finished, holding final temperature
-        			"temperature_sensor_used": Temperature sensor used to control Temperature
-        			"auto_pid": PID-Parameters chosen automatically from internal list
+            Arguments:
+            proportional -- (float) Value for the proportional band of the PID Parameters (0-300 K)
+            integral -- (float) Value for the integral action time of the PID Parameters ( 0-140 min)
+            derivative -- (float) Value for the derivative action time of the PID Parameters ( 0-273 min)
+
         """
 
         # Check and adjust user input
@@ -334,7 +329,7 @@ class ITC(object):
             print "Proportional value too low, set to 0."
         if proportional > 300:
             proportional = 300
-            print "Proportional value too high, set to 299K."
+            print "Proportional value too high, set to 300K."
         try:
             integral = float(integral)
         except:
@@ -342,19 +337,30 @@ class ITC(object):
         if integral < 0:
             integral = 0
             print "The integral value entered is too low, set to 0 min."
-        if integral > 1400:
-            integral = 1400 # Set integral time to maximum value 140.0 min.
-            print "The sweep time entered is too high, set to 1399 min."
+        if integral > 140.0:
+            integral = 140.0 # Set integral time to maximum value 140.0 min.
+            print "The  integral value entered is too high, set to 140 min."
         try:
-            hold_time = float(hold_time)
+            derivative = float(derivative)
         except:
-            raise ScriptSyntaxError("The hold time entered must be a float")
-        if hold_time < 0:
-            hold_time = 0
-            print "The hold time entered is too low, set to 0 min."
-        if hold_time > 1399:
-            hold_time = 1399 # Set hold time to maximum value.
-            print "The hold time entered is too high, set to 1399 min."
+            raise ScriptSyntaxError("The derivative value entered must be a float")
+        if derivative < 0:
+            derivative = 0
+            print "The derivative value entered is too low, set to 0 min."
+        if derivative > 273.0:
+            derivative = 273.0 # Set derivatie value to maximum value 273 min.
+            print "The derivative value entered is too high, set to 273 min."
+
+
+        # Communication with the instrument	
+    	toggle_auto_pid(False) # Stop automatic PID Control
+        # Communication with the instrument
+        self.itc.write("@0C3")	# remote & unlocked		
+        self.itc.write("@0P" + str(proportional)[:5])	# Set proportional value
+        self.itc.write("@0P" + str(integral)[:5])	# Set proportional value
+        self.itc.write("@0P" + str(derivative)[:5])	# Set proportional value
+        self.itc.write("@0C0")	# local & locked
+
 
     def clear(self):
         """

@@ -107,6 +107,19 @@ class ITC(object):
         self.itc.write("@0T" + str(temperature)[:5])    # set Temperature-set-point with a maximum of 5 digits
         self.itc.write("@0C0")          # local & locked
 
+    def get_temperature_set_point(self):
+        """
+            Return current temperature_set_point
+
+            Return:
+            temperature_set_point -- (float)
+        """
+
+        # Communication witht the instrument
+        temperature_set_point = float(self.itc.ask('@0R0'))
+
+        return temperature_set_point
+
         
     def set_temperature_sweep(self, temperature, sweep_time = 0, hold_time = 1399):
         """
@@ -194,6 +207,76 @@ class ITC(object):
         self.itc.write("@0C0")  # local & locked
 
 
+    def get_pid_parameters(self):
+        """
+            Return current PID_parameters of the System
+
+            Return:
+            proportional -- (float) proportional band in K
+            integral -- (float) integral action time in min
+            derivative -- (float) derivative action time in min
+        """
+
+        # Communication witht the instrument
+        proportional = float(self.itc.ask('@0R8'))
+        integral = float(self.itc.ask('@0R9'))
+        derivative = float(self.itc.ask('@0R10'))
+
+        return proportional, integral, derivative
+
+    def set_pid_parameters(self, proportional, integral, derivative):
+        """
+            Adjusts the settings of the PID-Parameters of the device.
+
+            Arguments:
+            proportional -- (float) Value for the proportional band of the PID Parameters (0-300 K)
+            integral -- (float) Value for the integral action time of the PID Parameters ( 0-140 min)
+            derivative -- (float) Value for the derivative action time of the PID Parameters ( 0-273 min)
+
+        """
+
+        # Check and adjust user input
+        try:
+            proportional = float(proportional)
+        except:
+            raise ScriptSyntaxError("The proportional value must be a float!")
+        if proportional < 0:
+            proportional = 0
+            print "Proportional value too low, set to 0."
+        if proportional > 300:
+            proportional = 300
+            print "Proportional value too high, set to 300K."
+        try:
+            integral = float(integral)
+        except:
+            raise ScriptSyntaxError("The integral value entered must be a float")
+        if integral < 0:
+            integral = 0
+            print "The integral value entered is too low, set to 0 min."
+        if integral > 140.0:
+            integral = 140.0 # Set integral time to maximum value 140.0 min.
+            print "The  integral value entered is too high, set to 140 min."
+        try:
+            derivative = float(derivative)
+        except:
+            raise ScriptSyntaxError("The derivative value entered must be a float")
+        if derivative < 0:
+            derivative = 0
+            print "The derivative value entered is too low, set to 0 min."
+        if derivative > 273.0:
+            derivative = 273.0 # Set derivatie value to maximum value 273 min.
+            print "The derivative value entered is too high, set to 273 min."
+
+
+        # Communication with the instrument 
+        self.toggle_auto_pid(False) # Stop automatic PID Control
+        # Communication with the instrument
+        self.itc.write("@0C3")  # remote & unlocked     
+        self.itc.write("@0P" + str(proportional)[:5])   # Set proportional value
+        self.itc.write("@0I" + str(integral)[:5])   # Set proportional value
+        self.itc.write("@0D" + str(derivative)[:5]) # Set proportional value
+        self.itc.write("@0C0")  # local & locked
+
     def toggle_auto_pid(self, value):
         """
             Enables or disables the Auto-PID button according to user input
@@ -219,6 +302,93 @@ class ITC(object):
 
         self.itc.write("@0C0")  # local & locked
 
+
+    def get_gas_flow(self):
+        """
+            Return current gas flow setting of the System
+
+            Return: gas_flow -- (float) current needle valve opening in %
+        """
+
+        # Communication witht the instrument
+        gas_flow = float(self.itc.ask('@0R7'))
+
+        return gas_flow
+
+
+    def set_gas_flow(self, value):
+        """
+            Sets the gas flow/needle valve setting of the device
+                        
+            Arguments:
+            value -- (float) Gas flow value in % with a resolution of 0.1%
+
+        """
+        
+        # Check and adjust user input
+        try:
+            gas_flow = float(value)
+        except:
+            raise ScriptSyntaxError("The Gas-Flow value must be a float")
+        if gas_flow < 0:
+            gas_flow = 0
+            print "Gas-Flow value too low, set to 0%."
+        if gas_flow > 100:
+            gas_flow = 100
+            print "Gas-Flow value too high, set to 100%."
+
+
+        # Communication with the instrument
+        self.itc.write("@0C3")  # remote & unlocked 
+        self.itc.write("@0G" + str(gasflow * 10)[0:4]) # Set the gasflow to desired value, requirements: 3 digit with 0.1% resolution
+        self.itc.write("@0C0")  # local & locked
+
+
+
+    def get_heater_output(self):
+        """
+            Return current heater output setting of the System
+
+            Return: 
+            heater_output_percentage -- (float) current heater output in %
+            herter_output_volts -- (float) current heater output in Volts
+        """
+
+        # Communication witht the instrument
+        heater_output_percentage = float(self.itc.ask('@0R5'))
+        herter_output_volts = float(self.itc.ask('@0R6'))
+
+        return heater_output_percentage, heater_output_volts
+
+
+    def set_heater_output(self, value):
+        """
+            Sets the heater output valve setting of the device
+                        
+            Arguments:
+            value -- (float) Heater Output in percent of the maximum heater value
+
+        """
+        
+        # Check and adjust user input
+        try:
+            heater_output = float(value)
+        except:
+            raise ScriptSyntaxError("The Heater Output value must be a float")
+        if heater_output < 0:
+            heater_output = 0
+            print "Heater Output value too low, set to 0%."
+        if heater_output > 100:
+            heater_output = 100
+            print "Heater Output value too high, set to 100%."
+
+
+        # Communication with the instrument
+        self.itc.write("@0C3")  # remote & unlocked 
+        self.itc.write("@0O" + str(heater_output * 10)[0:4]) # Set the heater_output to desired value, requirements: 3 digit with 0.1% resolution
+        self.itc.write("@0C0")  # local & locked
+
+
     def get_device_status(self):
         """
             Returns the current settings and status of the ITC
@@ -235,7 +405,11 @@ class ITC(object):
                     "auto_pid": PID-Parameters chosen automatically from internal list
         """
 
-        # Communication with the instrument     
+        # Communication with the instrument
+        heater_output_percentage, heater_output_volts = self.get_heater_output()
+        gas_flow = self.get_gas_flow()  
+        temperature_set_point = self.get_temperature_set_point()
+        pid_proportional, pid_integral, pid_derivative = get_pid_parameters()
         status = self.itc.ask("@0X")    # stop existing sweep
 
         # Device output Sequence:   XnAnCnSnnHn L n
@@ -296,71 +470,25 @@ class ITC(object):
             auto_pid = 1
 
 
-        status_dic = {"heater_auto": heater_auto,
-                    "gas_flow_auto": gas_flow_auto,
-                    "system_remote": system_remote,
-                    "system_locked": system_locked,
+        status_dic = {
+                    "temperature_set_point": temperature_set_point,
                     "sweep_running": sweep_running,
                     "sweep_holding": sweep_holding,
                     "temperature_sensor_used": temperature_sensor_used,
+                    "heater_auto": heater_auto,
+                    "heater_output_percentage": heater_output_percentage,
+                    "heater_output_volts": heater_output_volts,
+                    "gas_flow_auto": gas_flow_auto,
+                    "gas_flow" : gas_flow,
+                    "system_remote": system_remote,
+                    "system_locked": system_locked,
+                    "pid_proportional": pid_proportional,
+                    "pid_integral": pid_integral,
+                    "pid_derivative": pid_derivative
                     "auto_pid": auto_pid
                     }
 
         return status_dic
-
-    def set_pid_parameters(self, proportional, integral, derivative):
-        """
-            Adjusts the settings of the PID-Parameters of the device.
-
-            Arguments:
-            proportional -- (float) Value for the proportional band of the PID Parameters (0-300 K)
-            integral -- (float) Value for the integral action time of the PID Parameters ( 0-140 min)
-            derivative -- (float) Value for the derivative action time of the PID Parameters ( 0-273 min)
-
-        """
-
-        # Check and adjust user input
-        try:
-            proportional = float(proportional)
-        except:
-            raise ScriptSyntaxError("The proportional value must be a float!")
-        if proportional < 0:
-            proportional = 0
-            print "Proportional value too low, set to 0."
-        if proportional > 300:
-            proportional = 300
-            print "Proportional value too high, set to 300K."
-        try:
-            integral = float(integral)
-        except:
-            raise ScriptSyntaxError("The integral value entered must be a float")
-        if integral < 0:
-            integral = 0
-            print "The integral value entered is too low, set to 0 min."
-        if integral > 140.0:
-            integral = 140.0 # Set integral time to maximum value 140.0 min.
-            print "The  integral value entered is too high, set to 140 min."
-        try:
-            derivative = float(derivative)
-        except:
-            raise ScriptSyntaxError("The derivative value entered must be a float")
-        if derivative < 0:
-            derivative = 0
-            print "The derivative value entered is too low, set to 0 min."
-        if derivative > 273.0:
-            derivative = 273.0 # Set derivatie value to maximum value 273 min.
-            print "The derivative value entered is too high, set to 273 min."
-
-
-        # Communication with the instrument 
-        self.toggle_auto_pid(False) # Stop automatic PID Control
-        # Communication with the instrument
-        self.itc.write("@0C3")  # remote & unlocked     
-        self.itc.write("@0P" + str(proportional)[:5])   # Set proportional value
-        self.itc.write("@0I" + str(integral)[:5])   # Set proportional value
-        self.itc.write("@0D" + str(derivative)[:5]) # Set proportional value
-        self.itc.write("@0C0")  # local & locked
-
 
     def clear(self):
         """

@@ -12,6 +12,7 @@ __license__ = 'MIT'
 
 import visa
 import gpib
+import time
 
 class ITC(object):
     """ This class  offers an easy access to the temperature sensors of
@@ -42,10 +43,7 @@ class ITC(object):
             (float) Temperature in Kelvin from sensor with given identifier
             if identifier is not allowed this function returns 0.0
         """
-
-
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
-
 
         #if identifier is not allowed return just 0
         if identifier != 1 and identifier != 2 and identifier != 3:
@@ -102,6 +100,7 @@ class ITC(object):
             print "Temperature too high, set to 299K."
 
         # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
         self.itc.write("@0C3")  # remote & unlocked     
         self.itc.write("@0S0")  # stop possibly existing sweep
         self.itc.write("@0T" + str(temperature)[:5])    # set Temperature-set-point with a maximum of 5 digits
@@ -116,7 +115,8 @@ class ITC(object):
         """
 
         # Communication witht the instrument
-        temperature_set_point = float(self.itc.ask('@0R0'))
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        temperature_set_point = float(self.itc.ask('@0R0')[1:])
 
         return temperature_set_point
 
@@ -165,6 +165,7 @@ class ITC(object):
             print "The hold time entered is too high, set to 1399 min."
 
         # Communication with the insrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
         self.itc.write("@0C3")  # device set to state "remote & unlocked"   
         self.itc.write("@0S0")  # stop possibly existing sweep
 
@@ -190,6 +191,7 @@ class ITC(object):
 
         """
         # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
         self.itc.write("@0C3")  # remote & unlocked     
         self.itc.write("@0S0")  # stop possibly existing sweep
         self.itc.write("@0S1")  # start sweep       
@@ -202,6 +204,7 @@ class ITC(object):
 
         """
         # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
         self.itc.write("@0C3")  # remote & unlocked     
         self.itc.write("@0S0")  # stop existing sweep
         self.itc.write("@0C0")  # local & locked
@@ -218,9 +221,10 @@ class ITC(object):
         """
 
         # Communication witht the instrument
-        proportional = float(self.itc.ask('@0R8'))
-        integral = float(self.itc.ask('@0R9'))
-        derivative = float(self.itc.ask('@0R10'))
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        proportional = float(self.itc.ask('@0R8')[1:])
+        integral = float(self.itc.ask('@0R9')[1:])
+        derivative = float(self.itc.ask('@0R10')[1:])
 
         return proportional, integral, derivative
 
@@ -269,8 +273,8 @@ class ITC(object):
 
 
         # Communication with the instrument 
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
         self.toggle_auto_pid(False) # Stop automatic PID Control
-        # Communication with the instrument
         self.itc.write("@0C3")  # remote & unlocked     
         self.itc.write("@0P" + str(proportional)[:5])   # Set proportional value
         self.itc.write("@0I" + str(integral)[:5])   # Set proportional value
@@ -294,6 +298,7 @@ class ITC(object):
 
 
         # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
         self.itc.write("@0C3")  # remote & unlocked 
         if value:
             self.itc.write("@0L1")  # Use Auto-PID
@@ -309,9 +314,10 @@ class ITC(object):
 
             Return: gas_flow -- (float) current needle valve opening in %
         """
-
+        
         # Communication witht the instrument
-        gas_flow = float(self.itc.ask('@0R7'))
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        gas_flow = float(self.itc.ask('@0R7')[2:])
 
         return gas_flow
 
@@ -339,8 +345,9 @@ class ITC(object):
 
 
         # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
         self.itc.write("@0C3")  # remote & unlocked 
-        self.itc.write("@0G" + str(gasflow * 10)[0:4]) # Set the gasflow to desired value, requirements: 3 digit with 0.1% resolution
+        self.itc.write("@0G" + str(gas_flow)[0:4]) # Set the gasflow to desired value, requirements: 3 digit with 0.1% resolution
         self.itc.write("@0C0")  # local & locked
 
 
@@ -355,8 +362,9 @@ class ITC(object):
         """
 
         # Communication witht the instrument
-        heater_output_percentage = float(self.itc.ask('@0R5'))
-        herter_output_volts = float(self.itc.ask('@0R6'))
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        heater_output_percentage = float(self.itc.ask('@0R5')[2:])
+        heater_output_volts = float(self.itc.ask('@0R6')[2:])
 
         return heater_output_percentage, heater_output_volts
 
@@ -384,6 +392,7 @@ class ITC(object):
 
 
         # Communication with the instrument
+        self.itc.clear() # Clears the GPIB Bus to prevent problems in communication.
         self.itc.write("@0C3")  # remote & unlocked 
         self.itc.write("@0O" + str(heater_output * 10)[0:4]) # Set the heater_output to desired value, requirements: 3 digit with 0.1% resolution
         self.itc.write("@0C0")  # local & locked
@@ -409,7 +418,8 @@ class ITC(object):
         heater_output_percentage, heater_output_volts = self.get_heater_output()
         gas_flow = self.get_gas_flow()  
         temperature_set_point = self.get_temperature_set_point()
-        pid_proportional, pid_integral, pid_derivative = get_pid_parameters()
+        pid_proportional, pid_integral, pid_derivative = self.get_pid_parameters()
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.pyth
         status = self.itc.ask("@0X")    # stop existing sweep
 
         # Device output Sequence:   XnAnCnSnnHn L n
@@ -484,7 +494,7 @@ class ITC(object):
                     "system_locked": system_locked,
                     "pid_proportional": pid_proportional,
                     "pid_integral": pid_integral,
-                    "pid_derivative": pid_derivative
+                    "pid_derivative": pid_derivative,
                     "auto_pid": auto_pid
                     }
 
@@ -495,7 +505,9 @@ class ITC(object):
             Clears the GPIB Bus to prevent problems in communication.
 
         """
+        time.sleep(0.1)
         self.itc.clear()
+        time.sleep(0.1)
 
 
 

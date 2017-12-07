@@ -3,7 +3,7 @@
     oxford ITC
 """
 
-__author__ = 'Peter Gruszka'
+__author__ = 'Peter Gruszka, Marc Hanefeld'
 __version__ = '1.0'
 
 __email__ = 'gruszka@physik.uni-frankfurt.de'
@@ -479,6 +479,37 @@ class ITC(object):
         self.itc.write("@0C0")  # local & locked
 
 
+    def set_heater_sensor_used(self, identifier):
+        """
+            Sets the heater and temperature sensor used for temperature control.
+            In the special case of the ITC503 the setting 3 uses the temperature
+            sensor 3 but still controls the VTI heater (1)
+
+            Arguments:
+            identifier -- (int) the identifier of the sensor heater:#
+                                1 - VTI Temperature Senor and Heater
+                                2 - Sample Probe T-Sensor and Heater
+                                3 - Sample Mounting Position T-Sensor and VTI Heater
+
+        """
+
+        # Check and adjust user input
+        try:
+            identifier = int(identifier)
+        except:
+            raise ScriptSyntaxError("The Heater Output value must be an integer (1,2 or 3)")
+        if identifier != 1 and identifier != 2 and identifier != 3:
+            raise ScriptSyntaxError("The Heater Output value must be 1,2 or 3")
+
+        # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        self.itc.write("@0C3")  # remote & unlocked 
+        self.itc.write("@0H" + str(identifier)) # Set heater sensor used for temperature control
+        self.itc.write("@0C0")  # local & locked
+
+        return float(answer)
+
+
 
     def get_device_status(self):
         """
@@ -492,7 +523,7 @@ class ITC(object):
                     "system_locked": System is locked to any input
                     "sweep_running": A sweep is currently running
                     "sweep_holding": Sweep finished, holding final temperature
-                    "temperature_sensor_used": Temperature sensor used to control Temperature
+                    "heater_sensor_used": Heater sensor used to control Temperature
                     "auto_pid": PID-Parameters chosen automatically from internal list
         """
 
@@ -549,11 +580,11 @@ class ITC(object):
 
         # Examine which Heat Sensor is used for Heater Control
         if int(status[10]) == 1:
-            temperature_sensor_used = 1
+            heater_sensor_used = 1
         elif int(status[10]) == 2:
-            temperature_sensor_used = 2
+            heater_sensor_used = 2
         elif int(status[10]) == 3:
-            temperature_sensor_used = 3
+            heater_sensor_used = 3
 
         # Examine Auto-PID Status
         if int(status[12]) == 0:
@@ -566,7 +597,7 @@ class ITC(object):
                     "temperature_set_point": temperature_set_point,
                     "sweep_running": sweep_running,
                     "sweep_holding": sweep_holding,
-                    "temperature_sensor_used": temperature_sensor_used,
+                    "heater_sensor_used": heater_sensor_used,
                     "heater_auto": heater_auto,
                     "heater_output_percentage": heater_output_percentage,
                     "heater_output_volts": heater_output_volts,
@@ -604,7 +635,7 @@ if __name__ == '__main__':
     print ITC_CONNECTION.get_temperature2(), 'K'
     print ITC_CONNECTION.get_temperature3(), 'K'
     
-    ITC_CONNECTION.set_pid_parameters(5.0, 2.7, 0)
+    #ITC_CONNECTION.set_pid_parameters(5.0, 2.7, 0)
     #print ITC_CONNECTION.get_device_status()
     #ITC_CONNECTION.toggle_auto_pid(0)
     

@@ -1,13 +1,35 @@
 import io
 
+class FlowControllerResult(object):
+    def __init__(self, message):
+        self.__empty()
+        split = message.split(' ')
+
+        if len(split) > 5:
+            self.__init(split)
+
+    def __init(self, split):
+        self.pressure = float(split[1])
+        self.temperature = float(split[2])
+        self.volflow = float(split[3])
+        self.massflow = float(split[4])
+        self.setpoint = float(split[5])
+
+    def __empty(self):
+        self.pressure = 0
+        self.temperature = 0
+        self.volflow = 0
+        self.massflow = 0
+        self.setpoint = 0
+
 
 class FlowController(object):
     def __init__(self, connection, unit_id='A'):
         self.connection = connection
         self.unit_id = unit_id
-        self.init()
+        self.__init()
 
-    def init(self):
+    def __init(self):
         self.connection.baudrate = 19200
         self.connection.parity = serial.PARITY_NONE
         self.connection.stopbits = 1
@@ -18,19 +40,19 @@ class FlowController(object):
         self.connection.write('{0}\r'.format(self.unit_id).encode())
         raw_message = self.connection.readline()
 
-        split = raw_message.split(' ')
-        return {'pressure': float(split[1]),
-                'temperature': float(split[2]),
-                'volflow': float(split[3]),
-                'massflow': float(split[4]),
-                'setpoint': float(split[5])}
+        return FlowControllerResult(raw_message)
 
     def set(self, value):
-        value = min(100, max(value, 0)) #maximal 100 sccm and minimum 0 sccm
-        parameter = int( (value * 64000) / 100)
-        self.connection.write('{0}{1}\r'.format(self.unit_id, parameter))
-        return self.connection.readline()
+        parameter = self.__´calculate_parameter(value)
 
+        self.connection.write('{0}{1}\r'.format(self.unit_id, parameter))
+        raw_message = self.connection.readline()
+
+        return FlowControllerResult(raw_message)
+
+    def __calculate_parameter(self, value):
+        value = min(100, max(value, 0)) #maximal 100 sccm and minimum 0 sccm
+        return  int((value * 64000) / 100)
 
 if __name__ == '__main__':
     import serial

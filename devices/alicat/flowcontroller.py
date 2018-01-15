@@ -18,7 +18,12 @@ class FlowController(object):
         self.connection.write('{0}\r'.format(self.unit_id).encode())
         raw_message = self.connection.readline()
 
-        return raw_message.split(' ')
+        split = raw_message.split(' ')
+        return {'pressure': float(split[1]),
+                'temperature': float(split[2]),
+                'volflow': float(split[3]),
+                'massflow': float(split[4]),
+                'setpoint': float(split[5])}
 
     def set(self, value):
         value = min(100, max(value, 0)) #maximal 100 sccm and minimum 0 sccm

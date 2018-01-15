@@ -1,7 +1,7 @@
 import io
 
 
-class FlowController(Object):
+class FlowController(object):
     def __init__(self, connection, unit_id='A'):
         self.connection = connection
         self.unit_id = unit_id
@@ -16,7 +16,9 @@ class FlowController(Object):
 
     def poll(self):
         self.connection.write('{0}\r'.format(self.unit_id).encode())
-        return self.connection.readline()
+        raw_message = self.connection.readline()
+
+        return raw_message.split(' ')
 
     def set(self, value):
         value = min(100, max(value, 0)) #maximal 100 sccm and minimum 0 sccm

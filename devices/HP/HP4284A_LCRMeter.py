@@ -59,7 +59,7 @@ class LCR(object):
         ''' Method to get the frequency set for the device '''
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         frequency = self.__lcr.ask("FREQ?")
-        return frequency
+        return float(frequency)
 
     @frequency.setter
     def frequency(self, frequency):
@@ -134,7 +134,7 @@ class LCR(object):
         ''' Method to get the auto-range setting for the device '''
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         auto_range = self.__lcr.ask("FUNC:IMP:RANG:AUTO?")
-        return bool(auto_range)
+        return bool(int(auto_range))
 
     @auto_range.setter  
     def auto_range(self, value):
@@ -167,7 +167,7 @@ class LCR(object):
         ''' Method to get the auto level control setting for the device '''
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         auto_level_control = self.__lcr.ask("AMPL:ALC?")
-        return bool(auto_level_control)
+        return bool(int(auto_level_control))
     
     @auto_level_control.setter
     def auto_level_control(self, value):
@@ -201,7 +201,7 @@ class LCR(object):
 
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         high_power_mode = self.__lcr.ask("OUTP:HPOW?")
-        self.__high_power_mode = bool(high_power_mode)
+        self.__high_power_mode = bool(int(high_power_mode))
         return self.__high_power_mode
 
     @high_power_mode.setter
@@ -237,7 +237,7 @@ class LCR(object):
         ''' Method to get the status of a dc bias set for the device '''
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         dc_bias_status = self.__lcr.ask("BIAS:STAT?")
-        return bool(dc_bias_status)
+        return bool(int(dc_bias_status))
 
     @dc_bias_status.setter
     def dc_bias_status(self, value):
@@ -270,7 +270,7 @@ class LCR(object):
         ''' Method to get the source oszillator voltage level set for the device '''
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         source_voltage = self.__lcr.ask("VOLT?")
-        return source_voltage
+        return float(source_voltage)
 
     @source_voltage.setter
     def source_voltage(self, voltage):
@@ -310,7 +310,7 @@ class LCR(object):
         ''' Method to get the source oszillator current level set for the device '''
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         source_current = self.__lcr.ask("CURR?")
-        return source_current
+        return float(source_current)
 
     @source_current.setter
     def source_current(self, current):
@@ -350,7 +350,7 @@ class LCR(object):
         ''' Method to get the voltage of a dc bias set for the device '''
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         dc_bias_voltage = self.__lcr.ask("BIAS:VOLT?")
-        return dc_bias_voltage
+        return float(dc_bias_voltage)
 
     @dc_bias_voltage.setter
     def bias_voltage(self, voltage):
@@ -390,7 +390,7 @@ class LCR(object):
         ''' Method to get the current of a dc bias set for the device '''
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         dc_bias_current = self.__lcr.ask("BIAS:CURR?")
-        return dc_bias_current
+        return float(dc_bias_current)
 
     @dc_bias_current.setter
     def bias_current(self, current):
@@ -462,7 +462,7 @@ class LCR(object):
 
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         num_averages = self.__lcr.ask("APER?")
-        return num_averages.split(',')[1]
+        return float(num_averages.split(',')[1])
 
     @num_averages.setter
     def num_averages(self, value):
@@ -488,8 +488,6 @@ class LCR(object):
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         self.__lcr.write(signal_str)
 
-
-
     def read_data(self):
         ''' 
         Method to get the measuement data from the device. The *TRG command (trigger command) performs the same function as the Group Execute Trigger. This command moves the primary and secondary parameter measurement data into the HP 4284A's output buffer. '''
@@ -498,20 +496,33 @@ class LCR(object):
         data = self.__lcr.ask("*TRG")
         value1 = float(data.split(',')[0])
         value2 = float(data.split(',')[1])
-        return value1, value2
+        return float(value1), float(value2)
 
     def clear(self):
-            """
-                Clears the GPIB Bus to prevent problems in communication.
-
-            """
-            time.sleep(0.1)
-            self.__lcr.clear()
-            time.sleep(0.1)
+        """
+            Clears the GPIB Bus to prevent problems in communication.
+        """
+        time.sleep(0.1)
+        self.__lcr.clear()
+        time.sleep(0.1)
+            
+    def save(self):
+        self.frequency = 1000
+        self.high_power_mode = False
+        self.dc_bias_status = False
+        self.source_voltage = 0.005
+        self.auto_level_control = False
 
 # Example
 if __name__ == '__main__':
-    DEVICE = visa.instrument('GPIB::4')
+    DEVICE = visa.instrument('GPIB::4', timeout = None)
     lcr = LCR(DEVICE)
 
     print lcr.frequency
+    lcr.frequency = 1000
+    print lcr.frequency
+    lcr.measurement_type = 'ZTD'
+    lcr.num_averages = 5
+    print lcr.read_data()
+    lcr.save()
+    

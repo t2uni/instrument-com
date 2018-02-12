@@ -507,6 +507,7 @@ class LCR(object):
         time.sleep(0.1)
             
     def save(self):
+        self.clear()
         self.frequency = 1000
         self.high_power_mode = False
         self.dc_bias_status = False

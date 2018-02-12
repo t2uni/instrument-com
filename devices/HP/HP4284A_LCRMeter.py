@@ -29,9 +29,9 @@ class LCR(object):
         self.__lcr = device
         self.__lcr.term_chars = '\r'
         # needed for error free communication
-        gpib.config(self.itc.device, gpib.IbcEOSchar, ord('\r'))
+        gpib.config(self.__lcr.device, gpib.IbcEOSchar, ord('\r'))
         # use REOS und XEOS
-        gpib.config(self.itc.device, gpib.IbcEOSrd, 0x800 | 0x400)
+        gpib.config(self.__lcr.device, gpib.IbcEOSrd, 0x800 | 0x400)
 
 
         # Setup the device to work as needed for the following functions
@@ -312,7 +312,7 @@ class LCR(object):
         source_current = self.__lcr.ask("CURR?")
         return source_current
 
-    @source_current
+    @source_current.setter
     def source_current(self, current):
         """
             Adjusts the source oszillator current level set for the device

@@ -31,37 +31,13 @@ class ITC(object):
         # use REOS und XEOS
         gpib.config(self.itc.device, gpib.IbcEOSrd, 0x800 | 0x400)
 
-    def get_temperature(self, identifier):
-        """
-            Returns the temperature of a certain temperature sensor in the ITC
-
-            Arguments:
-            identifier -- (int) the identifier of a sensor
-                                which can take the values [1,2,3]
-
-            Return:
-            (float) Temperature in Kelvin from sensor with given identifier
-            if identifier is not allowed this function returns 0.0
-        """
-        self.clear() # Clears the GPIB Bus to prevent problems in communication.
-
-        #if identifier is not allowed return just 0
-        if identifier != 1 and identifier != 2 and identifier != 3:
-            return 0.0
-
-        #get answer from itc for sensor with given identifier
-        #discard first character since it is just the character 'R'
-        answer = self.itc.ask('@0R' + str(identifier))[1:]
-
-        return float(answer)
-
     @property
     def T1(self):
         """
             Return:
             (float) Temperature in Kelvin of sensor 1
         """
-        return self.get_temperature(1)
+        return self.__get_temperature(1)
 
     @property
     def T2(self):
@@ -69,7 +45,7 @@ class ITC(object):
             Return:
             (float) Temperature in Kelvin of sensor 2
         """
-        return self.get_temperature(2)
+        return self.__get_temperature(2)
 
     @property
     def T3(self):
@@ -77,7 +53,7 @@ class ITC(object):
             Return:
             (float) Temperature in Kelvin of sensor 3
         """
-        return self.get_temperature(3)
+        return self.__get_temperature(3)
 
 
     @property
@@ -151,6 +127,7 @@ class ITC(object):
             Adjusts the settings of the PID-Parameters of the device.
 
             Arguments:
+            pid_list -- [proportional, integral, derivative]
             proportional -- (float) Value for the proportional band of the PID Parameters (0-300 K)
             integral -- (float) Value for the integral action time of the PID Parameters ( 0-140 min)
             derivative -- (float) Value for the derivative action time of the PID Parameters ( 0-273 min)
@@ -309,10 +286,10 @@ class ITC(object):
         """
 
         # Communication with the instrument
-        heater_output_percentage, heater_output_volts = self.get_heater_output()
-        gas_flow = self.get_gas_flow()  
-        temperature_set_point = self.get_temperature_set_point()
-        pid_proportional, pid_integral, pid_derivative = self.get_pid_parameters()
+        heater_output_percentage, heater_output_volts = self.heater_output()
+        gas_flow = self.gas_flow()  
+        temperature_set_point = self.temperature_set_point()
+        pid_proportional, pid_integral, pid_derivative = self.pid_parameters()
         self.clear() # Clears the GPIB Bus to prevent problems in communication.pyth
         status = self.itc.ask("@0X")    # stop existing sweep
 
@@ -393,8 +370,31 @@ class ITC(object):
                     }
 
         return status_dic
-    
 
+
+    def __get_temperature(self, identifier):
+        """
+            Returns the temperature of a certain temperature sensor in the ITC
+
+            Arguments:
+            identifier -- (int) the identifier of a sensor
+                                which can take the values [1,2,3]
+
+            Return:
+            (float) Temperature in Kelvin from sensor with given identifier
+            if identifier is not allowed this function returns 0.0
+        """
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+
+        #if identifier is not allowed return just 0
+        if identifier != 1 and identifier != 2 and identifier != 3:
+            return 0.0
+
+        #get answer from itc for sensor with given identifier
+        #discard first character since it is just the character 'R'
+        answer = self.itc.ask('@0R' + str(identifier))[1:]
+
+        return float(answer)
 
     def set_temperature_sweep(self, temperature, sweep_time = 0, hold_time = 1399):
         """
@@ -526,7 +526,7 @@ class ITC(object):
             raise ScriptSyntaxError("The Toggle Value must be 1, 0 or a Bool")
 
 
-        heater_auto_state = self.get_system_status["heater_auto"]
+        heater_auto_state = self.device_status["heater_auto"]
 
 
         # Control sequence for device according to system status, since heater and gas_flow auto are coupled
@@ -565,7 +565,7 @@ class ITC(object):
             raise ScriptSyntaxError("The Toggle Value must be 1, 0 or a Bool")
 
 
-        gas_flow_auto_state = self.get_system_status["gas_flow_auto"]
+        gas_flow_auto_state = self.device_status["gas_flow_auto"]
 
 
         # Control sequence for device according to system status, since heater and gas_flow auto are coupled

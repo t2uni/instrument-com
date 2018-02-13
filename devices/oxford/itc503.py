@@ -146,7 +146,7 @@ class ITC(object):
         return proportional, integral, derivative
 
     @pid_parameters.setter
-    set_pid_parameters(self, proportional, integral, derivative):
+    def pid_parameters(self, pid_list):
         """
             Adjusts the settings of the PID-Parameters of the device.
 
@@ -156,7 +156,7 @@ class ITC(object):
             derivative -- (float) Value for the derivative action time of the PID Parameters ( 0-273 min)
 
         """
-
+        proportional, integral, derivative = pid_list    
         # Check and adjust user input
         try:
             proportional = float(proportional)
@@ -192,7 +192,7 @@ class ITC(object):
 
         # Communication with the instrument 
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
-        self.toggle_auto_pid(False) # Stop automatic PID Control
+        self.toggle_pid_auto(False) # Stop automatic PID Control
         self.itc.write("@0C3")  # remote & unlocked     
         self.itc.write("@0P" + str(proportional)[:5])   # Set proportional value
         self.itc.write("@0I" + str(integral)[:5])   # Set proportional value
@@ -635,9 +635,9 @@ if __name__ == '__main__':
     DEVICE = visa.instrument('GPIB::24')
     ITC_CONNECTION = ITC(DEVICE)
 
-    print ITC_CONNECTION.get_temperature1(), 'K'
-    print ITC_CONNECTION.get_temperature2(), 'K'
-    print ITC_CONNECTION.get_temperature3(), 'K'
+    print ITC_CONNECTION.T1, 'K'
+    print ITC_CONNECTION.T2, 'K'
+    print ITC_CONNECTION.T3, 'K'
     
     #ITC_CONNECTION.set_pid_parameters(5.0, 2.7, 0)
     #print ITC_CONNECTION.get_device_status()

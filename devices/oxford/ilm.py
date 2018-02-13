@@ -26,7 +26,8 @@ class ILM(object):
         # use REOS und XEOS
         gpib.config(self.ilm.device, gpib.IbcEOSrd, 0x800 | 0x400)
 
-    def get_level(self):
+    @property
+    def level(self):
         """
             Returns the current He4 level of the cryostat in percent
 
@@ -39,6 +40,12 @@ class ILM(object):
 
         return float(level_string) / 10.0
 
+    def clear(self):
+        """
+            Clears the GPIB Bus to prevent problems in communication.
+
+        """
+        self.ilm.clear()
 
 # example usage of the ILM class
 if __name__ == '__main__':

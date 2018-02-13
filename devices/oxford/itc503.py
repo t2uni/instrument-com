@@ -55,21 +55,24 @@ class ITC(object):
 
         return float(answer)
 
-    def get_temperature1(self):
+    @property
+    def T1(self):
         """
             Return:
             (float) Temperature in Kelvin of sensor 1
         """
         return self.get_temperature(1)
 
-    def get_temperature2(self):
+    @property
+    def T2(self):
         """
             Return:
             (float) Temperature in Kelvin of sensor 2
         """
         return self.get_temperature(2)
 
-    def get_temperature3(self):
+    @property
+    def T3(self):
         """
             Return:
             (float) Temperature in Kelvin of sensor 3
@@ -77,7 +80,8 @@ class ITC(object):
         return self.get_temperature(3)
 
 
-    def get_temperature_set_point(self):
+    @property
+    def temperature_set_point(self):
         """
             Return current temperature_set_point
 
@@ -91,8 +95,8 @@ class ITC(object):
 
         return temperature_set_point
 
-
-    def set_temperature_set_point(self, temperature):
+    @temperature_set_point.setter
+    def temperature_set_point(self, temperature):
         """
             Adjusts the temperature set point of the device
 
@@ -121,97 +125,9 @@ class ITC(object):
         self.itc.write("@0T" + str(temperature)[:5])    # set Temperature-set-point with a maximum of 5 digits
         self.itc.write("@0C0")          # local & locked
 
-        
-    def set_temperature_sweep(self, temperature, sweep_time = 0, hold_time = 1399):
-        """
-            Adjusts the settings of a temperature sweep of the device.
 
-            Arguments:
-            temperature -- (float) temperature to be set as sweep goal
-            sweep_time -- (float) total time for the sweep
-            hold_time -- (float) time the temperature should be held, once reached
-
-        """
-            
-        # Check and adjust user input
-        try:
-            temperature = float(temperature)
-        except:
-            raise ScriptSyntaxError("The temperature must be a float!")
-        if temperature < 0:
-            temperature = 0
-            print "Temperature too low, set to 0K."
-        if temperature > 299:
-            temperature = 299
-            print "Temperature too high, set to 299K."
-        try:
-            sweep_time = float(sweep_time)
-        except:
-            raise ScriptSyntaxError("The sweep time entered must be a float")
-        if sweep_time < 0:
-            sweep_time = 0
-            print "The sweep time entered is too low, set to 0 min."
-        if sweep_time > 1399:
-            sweep_time = 1399 # Set sweep time to maximum value.
-            print "The sweep time entered is too high, set to 1399 min."
-        try:
-            hold_time = float(hold_time)
-        except:
-            raise ScriptSyntaxError("The hold time entered must be a float")
-        if hold_time < 0:
-            hold_time = 0
-            print "The hold time entered is too low, set to 0 min."
-        if hold_time > 1399:
-            hold_time = 1399 # Set hold time to maximum value.
-            print "The hold time entered is too high, set to 1399 min."
-
-        # Communication with the insrument
-        self.clear() # Clears the GPIB Bus to prevent problems in communication.
-        self.itc.write("@0C3")  # device set to state "remote & unlocked"   
-        self.itc.write("@0S0")  # stop possibly existing sweep
-
-        if sweep_time == 0:
-            self.itc.write("@0T" + str(temperature)[:5])    # set Temperature-set-point with a maximum of 5 digits
-        else:
-            self.itc.write("@0x001")        # Adjust sweep-step no. 1 of the sweep table
-            self.itc.write("@0y001")        # Choose to adjust step temperature
-            self.itc.write("@0s" + str(temperature)[:5])    # Set step temperature
-            self.itc.write("@0y002")        # Choose to adjust sweep time
-            self.itc.write("@0s" + str(sweep_time)[:5]) # Set sweep time
-            self.itc.write("@0y003")        # Choose to adjust hold time
-            self.itc.write("@0s" + str(hold_time)[:5])  # Set hold time
-            self.itc.write("@0x000")        # Good practice according to manual
-            self.itc.write("@0y000")        # Good practice according to manual
-        
-        self.itc.write("@0C0")          # device set to state "local & locked"
-
-        
-    def start_temperature_sweep(self):
-        """
-            Starts a temperature sweep.
-
-        """
-        # Communication with the instrument
-        self.clear() # Clears the GPIB Bus to prevent problems in communication.
-        self.itc.write("@0C3")  # remote & unlocked     
-        self.itc.write("@0S0")  # stop possibly existing sweep
-        self.itc.write("@0S1")  # start sweep       
-        self.itc.write("@0C0")  # local & locked
-
-        
-    def stop_temperature_sweep(self):
-        """
-            Stops an existing temperature sweep.
-
-        """
-        # Communication with the instrument
-        self.clear() # Clears the GPIB Bus to prevent problems in communication.
-        self.itc.write("@0C3")  # remote & unlocked     
-        self.itc.write("@0S0")  # stop existing sweep
-        self.itc.write("@0C0")  # local & locked
-
-
-    def get_pid_parameters(self):
+    @property
+    def pid_parameters(self):
         """
             Return current PID_parameters of the System
 
@@ -229,7 +145,8 @@ class ITC(object):
 
         return proportional, integral, derivative
 
-    def set_pid_parameters(self, proportional, integral, derivative):
+    @pid_parameters.setter
+    set_pid_parameters(self, proportional, integral, derivative):
         """
             Adjusts the settings of the PID-Parameters of the device.
 
@@ -282,118 +199,9 @@ class ITC(object):
         self.itc.write("@0D" + str(derivative)[:5]) # Set proportional value
         self.itc.write("@0C0")  # local & locked
 
-    def toggle_pid_auto(self, value):
-        """
-            Enables or disables the Auto-PID button according to user input
-                        
-            Arguments:
-            value -- (Bool/Int) Enables [Ture/1] or Disables [False/0] Auto-PID
 
-        """
-        
-        # Check and adjust user input
-        try:
-            value = bool(value)
-        except:
-            raise ScriptSyntaxError("The Toggle Value must be 1, 0 or a Bool")
-
-
-        # Communication with the instrument
-        self.clear() # Clears the GPIB Bus to prevent problems in communication.
-        self.itc.write("@0C3")  # remote & unlocked 
-        if value:
-            self.itc.write("@0L1")  # Use Auto-PID
-        else:
-            self.itc.write("@0L0")  # Disables use of Auto-PID
-
-        self.itc.write("@0C0")  # local & locked
-
-
-    def get_gas_flow(self):
-        """
-            Return current gas flow setting of the System
-
-            Return: gas_flow -- (float) current needle valve opening in %
-        """
-        
-        # Communication witht the instrument
-        self.clear() # Clears the GPIB Bus to prevent problems in communication.
-        gas_flow = float(self.itc.ask('@0R7')[2:])
-
-        return gas_flow
-
-
-    def set_gas_flow(self, value):
-        """
-            Sets the gas flow/needle valve setting of the device
-                        
-            Arguments:
-            value -- (float) Gas flow value in % with a resolution of 0.1%
-
-        """
-        
-        # Check and adjust user input
-        try:
-            gas_flow = float(value)
-        except:
-            raise ScriptSyntaxError("The Gas-Flow value must be a float")
-        if gas_flow < 0:
-            gas_flow = 0
-            print "Gas-Flow value too low, set to 0%."
-        if gas_flow > 100:
-            gas_flow = 100
-            print "Gas-Flow value too high, set to 100%."
-
-
-        # Communication with the instrument
-        self.clear() # Clears the GPIB Bus to prevent problems in communication.
-        self.itc.write("@0C3")  # remote & unlocked 
-        self.itc.write("@0G" + str(gas_flow)[0:4]) # Set the gasflow to desired value, requirements: 3 digit with 0.1% resolution
-        self.itc.write("@0C0")  # local & locked
-
-
-    def toggle_gas_flow_auto(self, value):
-        """
-            Enables or disables the Auto-Gas-Flow button according to user input
-                        
-            Arguments:
-            value -- (Bool/Int) Enables [Ture/1] or Disables [False/0] Auto-Gas-Flow
-
-        """
-        
-        # Check and adjust user input
-        try:
-            value = bool(value)
-        except:
-            raise ScriptSyntaxError("The Toggle Value must be 1, 0 or a Bool")
-
-
-        heater_auto_state = self.get_system_status["heater_auto"]
-
-
-        # Control sequence for device according to system status, since heater and gas_flow auto are coupled
-        if value:
-            if heater_auto_state == 0:
-                send_string = "A2"
-            else:
-                send_string = "A3"
-        else:
-            if heater_auto_state == 0:
-                send_string = "A0"
-            else:
-                send_string = "A1"
-
-
-
-        # Communication with the instrument
-        self.clear() # Clears the GPIB Bus to prevent problems in communication.
-        self.itc.write("@0C3")  # remote & unlocked 
-        self.itc.write("@0" + send_string) # Set Auto Gas-Flow according to users preference
-        self.itc.write("@0C0")  # local & locked
-
-
-
-    def get_heater_output(self):
+    @property
+    def heater_output(self):
         """
             Return current heater output setting of the System
 
@@ -409,8 +217,8 @@ class ITC(object):
 
         return heater_output_percentage, heater_output_volts
 
-
-    def set_heater_output(self, value):
+    @heater_output.setter
+    def heater_output(self, value):
         """
             Sets the heater output valve setting of the device
                         
@@ -439,79 +247,52 @@ class ITC(object):
         self.itc.write("@0C0")  # local & locked
 
 
-    def toggle_heater_auto(self, value):
+    @property
+    def gas_flow(self):
         """
-            Enables or disables the Auto-Heater button according to user input
+            Return current gas flow setting of the System
+
+            Return: gas_flow -- (float) current needle valve opening in %
+        """
+        
+        # Communication witht the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        gas_flow = float(self.itc.ask('@0R7')[2:])
+
+        return gas_flow
+
+    @gas_flow.setter
+    def gas_flow(self, value):
+        """
+            Sets the gas flow/needle valve setting of the device
                         
             Arguments:
-            value -- (Bool/Int) Enables [Ture/1] or Disables [False/0] Auto-Heater
+            value -- (float) Gas flow value in % with a resolution of 0.1%
 
         """
         
         # Check and adjust user input
         try:
-            value = bool(value)
+            gas_flow = float(value)
         except:
-            raise ScriptSyntaxError("The Toggle Value must be 1, 0 or a Bool")
-
-
-        gas_flow_auto_state = self.get_system_status["gas_flow_auto"]
-
-
-        # Control sequence for device according to system status, since heater and gas_flow auto are coupled
-        if value:
-            if gas_flow_state == 0:
-                send_string = "A1"
-            else:
-                send_string = "A3"
-        else:
-            if gas_flow_state == 0:
-                send_string = "A0"
-            else:
-                send_string = "A2"
-
+            raise ScriptSyntaxError("The Gas-Flow value must be a float")
+        if gas_flow < 0:
+            gas_flow = 0
+            print "Gas-Flow value too low, set to 0%."
+        if gas_flow > 100:
+            gas_flow = 100
+            print "Gas-Flow value too high, set to 100%."
 
 
         # Communication with the instrument
         self.clear() # Clears the GPIB Bus to prevent problems in communication.
         self.itc.write("@0C3")  # remote & unlocked 
-        self.itc.write("@0" + send_string) # Set Auto Heater according to users preference
-        self.itc.write("@0C0")  # local & locked
+        self.itc.write("@0G" + str(gas_flow)[0:4]) # Set the gasflow to desired value, requirements: 3 digit with 0.1% resolution
+        self.itc.write("@0C0")  # local & locked     
 
 
-    def set_heater_sensor_used(self, identifier):
-        """
-            Sets the heater and temperature sensor used for temperature control.
-            In the special case of the ITC503 the setting 3 uses the temperature
-            sensor 3 but still controls the VTI heater (1)
-
-            Arguments:
-            identifier -- (int) the identifier of the sensor heater:#
-                                1 - VTI Temperature Senor and Heater
-                                2 - Sample Probe T-Sensor and Heater
-                                3 - Sample Mounting Position T-Sensor and VTI Heater
-
-        """
-
-        # Check and adjust user input
-        try:
-            identifier = int(identifier)
-        except:
-            raise ScriptSyntaxError("The Heater Output value must be an integer (1,2 or 3)")
-        if identifier != 1 and identifier != 2 and identifier != 3:
-            raise ScriptSyntaxError("The Heater Output value must be 1,2 or 3")
-
-        # Communication with the instrument
-        self.clear() # Clears the GPIB Bus to prevent problems in communication.
-        self.itc.write("@0C3")  # remote & unlocked 
-        self.itc.write("@0H" + str(identifier)) # Set heater sensor used for temperature control
-        self.itc.write("@0C0")  # local & locked
-
-        return float(answer)
-
-
-
-    def get_device_status(self):
+    @property
+    def device_status(self):
         """
             Returns the current settings and status of the ITC
 
@@ -612,6 +393,232 @@ class ITC(object):
                     }
 
         return status_dic
+    
+
+
+    def set_temperature_sweep(self, temperature, sweep_time = 0, hold_time = 1399):
+        """
+            Adjusts the settings of a temperature sweep of the device.
+
+            Arguments:
+            temperature -- (float) temperature to be set as sweep goal
+            sweep_time -- (float) total time for the sweep
+            hold_time -- (float) time the temperature should be held, once reached
+
+        """
+            
+        # Check and adjust user input
+        try:
+            temperature = float(temperature)
+        except:
+            raise ScriptSyntaxError("The temperature must be a float!")
+        if temperature < 0:
+            temperature = 0
+            print "Temperature too low, set to 0K."
+        if temperature > 299:
+            temperature = 299
+            print "Temperature too high, set to 299K."
+        try:
+            sweep_time = float(sweep_time)
+        except:
+            raise ScriptSyntaxError("The sweep time entered must be a float")
+        if sweep_time < 0:
+            sweep_time = 0
+            print "The sweep time entered is too low, set to 0 min."
+        if sweep_time > 1399:
+            sweep_time = 1399 # Set sweep time to maximum value.
+            print "The sweep time entered is too high, set to 1399 min."
+        try:
+            hold_time = float(hold_time)
+        except:
+            raise ScriptSyntaxError("The hold time entered must be a float")
+        if hold_time < 0:
+            hold_time = 0
+            print "The hold time entered is too low, set to 0 min."
+        if hold_time > 1399:
+            hold_time = 1399 # Set hold time to maximum value.
+            print "The hold time entered is too high, set to 1399 min."
+
+        # Communication with the insrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        self.itc.write("@0C3")  # device set to state "remote & unlocked"   
+        self.itc.write("@0S0")  # stop possibly existing sweep
+
+        if sweep_time == 0:
+            self.itc.write("@0T" + str(temperature)[:5])    # set Temperature-set-point with a maximum of 5 digits
+        else:
+            self.itc.write("@0x001")        # Adjust sweep-step no. 1 of the sweep table
+            self.itc.write("@0y001")        # Choose to adjust step temperature
+            self.itc.write("@0s" + str(temperature)[:5])    # Set step temperature
+            self.itc.write("@0y002")        # Choose to adjust sweep time
+            self.itc.write("@0s" + str(sweep_time)[:5]) # Set sweep time
+            self.itc.write("@0y003")        # Choose to adjust hold time
+            self.itc.write("@0s" + str(hold_time)[:5])  # Set hold time
+            self.itc.write("@0x000")        # Good practice according to manual
+            self.itc.write("@0y000")        # Good practice according to manual
+        
+        self.itc.write("@0C0")          # device set to state "local & locked"
+ 
+    def start_temperature_sweep(self):
+        """
+            Starts a temperature sweep.
+
+        """
+        # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        self.itc.write("@0C3")  # remote & unlocked     
+        self.itc.write("@0S0")  # stop possibly existing sweep
+        self.itc.write("@0S1")  # start sweep       
+        self.itc.write("@0C0")  # local & locked
+     
+    def stop_temperature_sweep(self):
+        """
+            Stops an existing temperature sweep.
+
+        """
+        # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        self.itc.write("@0C3")  # remote & unlocked     
+        self.itc.write("@0S0")  # stop existing sweep
+        self.itc.write("@0C0")  # local & locked
+
+
+
+    def toggle_pid_auto(self, value):
+        """
+            Enables or disables the Auto-PID button according to user input
+                        
+            Arguments:
+            value -- (Bool/Int) Enables [Ture/1] or Disables [False/0] Auto-PID
+
+        """
+        
+        # Check and adjust user input
+        try:
+            value = bool(value)
+        except:
+            raise ScriptSyntaxError("The Toggle Value must be 1, 0 or a Bool")
+
+
+        # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        self.itc.write("@0C3")  # remote & unlocked 
+        if value:
+            self.itc.write("@0L1")  # Use Auto-PID
+        else:
+            self.itc.write("@0L0")  # Disables use of Auto-PID
+
+        self.itc.write("@0C0")  # local & locked
+
+    def toggle_gas_flow_auto(self, value):
+        """
+            Enables or disables the Auto-Gas-Flow button according to user input
+                        
+            Arguments:
+            value -- (Bool/Int) Enables [Ture/1] or Disables [False/0] Auto-Gas-Flow
+
+        """
+        
+        # Check and adjust user input
+        try:
+            value = bool(value)
+        except:
+            raise ScriptSyntaxError("The Toggle Value must be 1, 0 or a Bool")
+
+
+        heater_auto_state = self.get_system_status["heater_auto"]
+
+
+        # Control sequence for device according to system status, since heater and gas_flow auto are coupled
+        if value:
+            if heater_auto_state == 0:
+                send_string = "A2"
+            else:
+                send_string = "A3"
+        else:
+            if heater_auto_state == 0:
+                send_string = "A0"
+            else:
+                send_string = "A1"
+
+
+
+        # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        self.itc.write("@0C3")  # remote & unlocked 
+        self.itc.write("@0" + send_string) # Set Auto Gas-Flow according to users preference
+        self.itc.write("@0C0")  # local & locked
+
+    def toggle_heater_auto(self, value):
+        """
+            Enables or disables the Auto-Heater button according to user input
+                        
+            Arguments:
+            value -- (Bool/Int) Enables [Ture/1] or Disables [False/0] Auto-Heater
+
+        """
+        
+        # Check and adjust user input
+        try:
+            value = bool(value)
+        except:
+            raise ScriptSyntaxError("The Toggle Value must be 1, 0 or a Bool")
+
+
+        gas_flow_auto_state = self.get_system_status["gas_flow_auto"]
+
+
+        # Control sequence for device according to system status, since heater and gas_flow auto are coupled
+        if value:
+            if gas_flow_state == 0:
+                send_string = "A1"
+            else:
+                send_string = "A3"
+        else:
+            if gas_flow_state == 0:
+                send_string = "A0"
+            else:
+                send_string = "A2"
+
+
+
+        # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        self.itc.write("@0C3")  # remote & unlocked 
+        self.itc.write("@0" + send_string) # Set Auto Heater according to users preference
+        self.itc.write("@0C0")  # local & locked
+
+
+    def set_heater_sensor_used(self, identifier):
+        """
+            Sets the heater and temperature sensor used for temperature control.
+            In the special case of the ITC503 the setting 3 uses the temperature
+            sensor 3 but still controls the VTI heater (1)
+
+            Arguments:
+            identifier -- (int) the identifier of the sensor heater:#
+                                1 - VTI Temperature Senor and Heater
+                                2 - Sample Probe T-Sensor and Heater
+                                3 - Sample Mounting Position T-Sensor and VTI Heater
+
+        """
+
+        # Check and adjust user input
+        try:
+            identifier = int(identifier)
+        except:
+            raise ScriptSyntaxError("The Heater Output value must be an integer (1,2 or 3)")
+        if identifier != 1 and identifier != 2 and identifier != 3:
+            raise ScriptSyntaxError("The Heater Output value must be 1,2 or 3")
+
+        # Communication with the instrument
+        self.clear() # Clears the GPIB Bus to prevent problems in communication.
+        self.itc.write("@0C3")  # remote & unlocked 
+        self.itc.write("@0H" + str(identifier)) # Set heater sensor used for temperature control
+        self.itc.write("@0C0")  # local & locked
+
+        return float(answer)
+
 
     def clear(self):
         """
@@ -621,9 +628,6 @@ class ITC(object):
         time.sleep(0.1)
         self.itc.clear()
         time.sleep(0.1)
-
-
-
 
 
 # Example

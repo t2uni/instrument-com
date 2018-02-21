@@ -45,7 +45,7 @@ class SR830m(object):
         elif self.Vrms_AC_min <= value <= self.Vrms_AC_max:
             value_verified = True
         else:
-            print "Desired voltage is out of device range."
+            print("Desired voltage is out of device range.")
             value_verified = False
         
         if value_verified:
@@ -65,7 +65,7 @@ class SR830m(object):
         if self.frequency_min <= value <= self.frequency_max:
             value_verified = True
         else:
-            print "Desired frequency is out of device range."
+            print("Desired frequency is out of device range.")
             value_verified = False
         
         if value_verified:
@@ -85,7 +85,7 @@ class SR830m(object):
         if value in self.integration_times:
             value_verified = True
         else:
-            print "Desired integration time is not an allowed value for the device."
+            print("Desired integration time is not an allowed value for the device.")
             value_verified = False
         
         if value_verified == True:
@@ -126,7 +126,6 @@ class SR830m(object):
                 self.LIA.write('SENS ' + str(new_sensitivity))
             else:
                 break
-                print "here"
             
         return self.sensitivities[new_sensitivity]
     
@@ -140,7 +139,7 @@ class SR830m(object):
         elif value in self.sensitivities:
             value_verified = True
         else:
-            print "Desired sensitivity is not an allowed value for the device."
+            print("Desired sensitivity is not an allowed value for the device.")
             value_verified = False
         
         if value_verified == True:
@@ -157,7 +156,7 @@ class SR830m(object):
         ''' Method to get sevaral output values of the device: X, Y, R, angle, frequency. Returns dictionary with these values.'''
         output_str = self.LIA.ask("SNAP? 1,2,3,4,9")
         output_list = output_str.split(",")
-        print output_list
+        #print(output_list)
         output_dict = {}
         output_dict["X"] = float(output_list[0])
         output_dict["Y"] = float(output_list[1])
@@ -198,14 +197,14 @@ class SR830m(object):
         if self.V_AUX_output_min <= value <= self.V_AUX_output_max:
             value_verified = True
         else:
-            print "Desired voltage is out of device range."
+            print("Desired voltage is out of device range.")
             value_verified = False
         
         
         if i in [1, 2, 3, 4]:
             output_verified = True
         else:
-            print "Desired output is not allowed."
+            print("Desired output is not allowed.")
             output_verified = False
         
         
@@ -237,12 +236,12 @@ class SR830m(object):
 # Beispielprogramm
 # Es werden immer das visa und das HP3325B Modul benoetigt
 if __name__ == '__main__':
-    device = visa.instrument("GPIB::8", timeout=None)  # Lock-In Amp
+    device = visa.instrument("GPIB::7", timeout=None)  # Lock-In Amp
     LIA = SR830m(device)
     # LIA.set_frequency(120)
     # LIA.set_voltage(10)
     # LIA.adjust_sensitivity()
-    # print LIA.get_voltage()
+    print(LIA.get_voltage())
     # print LIA.get_frequency()
     # print LIA.get_integration_time()
     LIA.clean_up()

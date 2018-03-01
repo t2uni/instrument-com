@@ -4,7 +4,10 @@
 __author__ = 'Alfons Schuck'
 __version__ = '0.1'
 
+
 import visa
+#import virtual_visa as visa
+
 assert visa.__version__ >= '1.5', 'visa should be 1.5 or newer'
 
 
@@ -43,6 +46,7 @@ class SMC(object):
         # Initialize Instrument
         self.unit = 0
         self.pause = 0
+        self.direction = 0
         self.iRate = self.iRate  # Set I-Rate
 
 
@@ -102,8 +106,8 @@ class SMC(object):
     def setPoint(self) -> dict:
         valueString = self.inst.query('S')
         setPoint = {'unit' : int(valueString[1]),
-                    'upper' : float(valueString[3:11]),
-                    'lower' : float(valueString[12:20])}
+                    'upper' : float(valueString[3:10]),
+                    'lower' : float(valueString[11:18])}
 
         return setPoint
 
@@ -115,10 +119,10 @@ class SMC(object):
     def upperSetPoint(self, value: float):
         if self.unit == 0:
             assert abs(value) < self._IMax
-            self.inst.query('U{:07.3}'.format(value))
+            self.inst.query('U{:07.3f}'.format(value))
         elif self.unit == 1:
             assert abs(value) < self._TMax
-            self.inst.query('U{:07.4}'.format(value))
+            self.inst.query('U{:07.4f}'.format(value))
         else:
             pass
 
@@ -136,10 +140,10 @@ class SMC(object):
         self.pause = 1
         if self.unit == 0:
             assert abs(value) < self._IMax
-            self.inst.query('L{:07.3}'.format(value))
+            self.inst.query('L{:07.3f}'.format(value))
         elif self.unit == 1:
             assert abs(value) < self._TMax
-            self.inst.query('L{:07.4}'.format(value))
+            self.inst.query('L{:07.4f}'.format(value))
         else:
             pass
 
@@ -157,7 +161,7 @@ class SMC(object):
     def rampTarget(self, value:int):
         assert (value == 0) or (value == 1) or (value ==2), 'Value should be 0 (Zero), 1(Lower) or 2(Upper)!'
         self._rampTarget = value
-        self.inst.query('R{:1d}'.format(self._rampTarget))
+        self.inst.query('R{:1d}'.format(self.rampTarget))
 
     @property
     def direction(self) -> int:
@@ -170,10 +174,13 @@ class SMC(object):
         self.inst.query('D{:1d}'.format(self.direction))
 
 
-
-
 if __name__ == '__main__':
-    a = SMC()
+    dev = SMC()
+    print(dev.upperSetPoint)
+
+
+
+
 
 
 

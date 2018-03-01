@@ -1,9 +1,11 @@
 import io
+import serial
 
 class FlowControllerResult(object):
     def __init__(self, message):
         self.__empty()
-        split = message.split(' ')
+        split = message.decode('utf-8').split(' ')
+        self.message = message
 
         if len(split) > 5:
             self.__init(split)
@@ -47,7 +49,8 @@ class FlowController(object):
     def set(self, value):
         parameter = self.__calculate_parameter(value)
 
-        self.connection.write('{0}{1}\r'.format(self.unit_id, parameter))
+        message = '{0}{1}\r'.format(self.unit_id, parameter).encode()
+        self.connection.write(message)
         raw_message = self.connection.readline()
 
         return FlowControllerResult(raw_message)
@@ -68,12 +71,14 @@ if __name__ == '__main__':
         flow = float(sys.argv[1])
 
     import serial
-    S = serial.Serial('/dev/ttyUSB3')
+    S = serial.Serial('/dev/ttyUSB2')
 
     fc = FlowController(S)
 
-    print(fc.poll())
+    rtn = fc.poll()
+    print(rtn.message)
+    print(rtn)
     print(fc.set(flow))
-    fc.off()
+    #fc.off()
 
 

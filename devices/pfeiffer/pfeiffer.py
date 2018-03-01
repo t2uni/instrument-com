@@ -66,11 +66,11 @@ class SingleGaugeTPG361(object):
         """
         conn = self.connection
 
-        conn.write(message + CRLF)
+        conn.write((message + CRLF).encode())
         result = conn.readline()
-        if result == MESSAGE_ACCEPTED:
-            conn.write(ENQ)
-            result = conn.readline()
+        if result == MESSAGE_ACCEPTED.encode():
+            conn.write(ENQ.encode())
+            result = conn.readline().decode('utf-8')
             return result
 
         if result == MESSAGE_NOT_ACCEPTED:
@@ -105,15 +105,17 @@ class SingleGaugeTPG361(object):
 #example
 #shows the usage of the upper class
 if __name__ == '__main__':
-    PFEIFFER = SingleGaugeTPG361('COM11')
-    print PFEIFFER.get_pressure(1)
-    print PFEIFFER.get_pressure(2)
+    path = '/dev/ttyUSB0'
+
+    PFEIFFER = SingleGaugeTPG361(path)
+    print(PFEIFFER.get_pressure(1))
+    print(PFEIFFER.get_pressure(2))
     PFEIFFER.close()
 
     from time import time
 
     SPOT0 = time()
-    PFEIFFER = SingleGaugeTPG361('COM11')
+    PFEIFFER = SingleGaugeTPG361(path)
     N = 100
 
     SPOT1 = time()
@@ -124,8 +126,8 @@ if __name__ == '__main__':
     PFEIFFER.close()
     SPOT3 = time()
 
-    print 'load connection:', SPOT1 - SPOT0
-    print 'get_pressure:', SPOT2 - SPOT1
-    print 'get_pressure mean:', (SPOT2 - SPOT1) / float(N)
-    print 'closing connection:', SPOT3 - SPOT2
-    print 'total time:', SPOT3 - SPOT0
+    print('load connection:', SPOT1 - SPOT0)
+    print('get_pressure:', SPOT2 - SPOT1)
+    print('get_pressure mean:', (SPOT2 - SPOT1) / float(N))
+    print('closing connection:', SPOT3 - SPOT2)
+    print('total time:', SPOT3 - SPOT0)

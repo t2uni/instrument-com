@@ -10,8 +10,8 @@ __status__ = 'alpha'
 __license__ = 'MIT'
 
 
-print "--- no visa-library installed ---"
-print "--- using linux-gpib,PySerial,socket and minimalmodbus library ---"
+print("--- no visa-library installed ---")
+print("--- using linux-gpib,PySerial,socket and minimalmodbus library ---")
 
 import socket
 import gpib
